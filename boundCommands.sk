@@ -1,0 +1,135 @@
+# made by nova
+# version 1.0
+
+# developed and tested on skript version 2.14.1
+# requires: worldedit
+# addons: SkBee, skript-reflect
+
+import:
+	com.sk89q.worldedit.WorldEdit
+
+on load:
+	set {-SessionManager} to WorldEdit.getInstance().getSessionManager()
+
+function getSelection(p: player) :: locations:
+	set {_session} to {-SessionManager}.findByName(name of {_p})
+	set {_selection} to try {_session}.getSelection()
+
+	{_selection} is not set:
+		stop
+
+	set {_pos1} to {_selection}.getMinimumPoint()
+	set {_pos2} to {_selection}.getMaximumPoint()
+
+	set {_pos1} to location({_pos1}.x(), {_pos1}.y(), {_pos1}.z(), world of {_p})
+	set {_pos2} to location({_pos2}.x(), {_pos2}.y(), {_pos2}.z(), world of {_p})
+
+	return {_pos1}, {_pos2}
+
+local function checkConstraints(pos1: location, pos2: location) :: boolean:
+	difference between y coord of {_pos1} and y coord of {_pos2} >= 1:
+		difference between x coord of {_pos1} and x coord of {_pos2} >= 1
+		difference between z coord of {_pos1} and z coord of {_pos2} >= 1
+		return true
+	
+	return false
+
+command /createbound <text>:
+	usage: &a/createbound <name>
+	permission: admin
+	trigger:
+		set {_pos::*} to getSelection(player)
+		size of {_pos::*} is 2:
+			checkConstraints({_pos::1}, {_pos::2}) is false:
+				send "&cBound must have a size of at least 2x2x2"
+				stop
+
+			bound with id arg-1 is set:
+				delete bound with id arg-1
+				send "&2Previous bound overwritten"
+			create bound with id arg-1 between {_pos::1} and {_pos::2}
+			send "&3Created bound with id &7%arg-1% &3between &7%format({_pos::1})% &3and &7%format({_pos::2})% &3in world &7'%world of {_pos::1}%'"
+		else:
+			send "&cYou need to make a selection with worldedit"
+
+command /deletebound <text>:
+	usage: &a/deletebound <name>
+	permission: admin
+	trigger:
+		bound with id arg-1 is set:
+			delete bound with id arg-1
+			send "&3Deleted bound with id &7%arg-1%"
+		else:
+			send "&cBound with id &7%arg-1% &cdoes not exist"
+
+command /boundvalue <text> <text> [<string>]:
+	usage: &a/boundvalue <bound> <key> [value]
+	permission: admin
+	trigger:
+		bound with id arg-1 is set:
+			arg-3 is set:
+				set {_value} to castValue(arg-3)
+				set bound value arg-2 of bound with id arg-1 to {_value}
+				send "&3Set value &7%arg-2%&3 of bound with id &7%arg-1% &3to &a%debug info of {_value}%"
+			else:
+				set {_value} to bound value arg-2 of bound with id arg-1
+				send "&3Value &7%arg-2%&3 of bound with id &7%arg-1% &3is currently: &a%debug info of {_value}%"
+		else:
+			send "&cBound with id &7%arg-1% &cdoes not exist"
+
+command /deleteboundvalue <text> <text>:
+	usage: &a/deleteboundvalue <bound> <key>
+	permission: admin
+	trigger:
+		bound with id arg-1 is set:
+			bound value arg-2 of bound with id arg-1 is set:
+				delete bound value arg-2 of bound with id arg-1
+				send "&3Deleted value &7%arg-2%&3 of bound with id &7%arg-1%"
+			else:
+				send "&cThat value does not exist!"
+		else:
+			send "&cBound with id &7%arg-1% &cdoes not exist"
+
+command /clearboundvalues <text>:
+	usage: &a/clearboundvalues <bound>
+	aliases: /deleteboundvalues
+	permission: admin
+	trigger:
+		bound with id arg-1 is set:
+			delete all bound values of bound with id arg-1
+			send "&3Cleared all values of bound with id &7%arg-1%"
+		else:
+			send "&cBound with id &7%arg-1% &cdoes not exist"
+
+command /viewboundvalues <text>:
+	usage: &a/viewboundvalues <bound>
+	aliases: /boundvalues
+	permission: admin
+	trigger:
+		bound with id arg-1 is set:
+			send "&3Values of bound with id &7%arg-1%&3:"
+			set {_keys::*} to all bound keys of bound with id arg-1
+			set {_values::*} to all bound values of bound with id arg-1
+			loop {_keys::*}:
+				send "&2%loop-value%&7: &a%debug info of {_values::%loop-index%}%"
+		else:
+			send "&cBound with id &7%arg-1% &cdoes not exist"
+
+local function castValue(input: string) :: object:
+	{_input} is "true" or "false":
+		return {_input} parsed as boolean
+	
+	{_input} parsed as number is set:
+		return {_input} parsed as number
+
+	return {_input}
+
+local function format(loc: location) :: string:
+	set {_split::*} to "%{_loc}%" split at ", yaw:"
+	return {_split::1}
+
+on tab complete for "deletebound", "boundvalue", "viewboundvalues", "deleteboundvalue", "clearboundvalues", "deleteboundvalues", "boundvalues":
+	set tab completions for position 1 to all nontemporary bound ids
+
+on tab complete for "boundvalue", "deleteboundvalue":
+	set tab completions for position 2 to all bound keys of bound with id tab arg-1
