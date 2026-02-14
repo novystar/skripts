@@ -1,0 +1,156 @@
+# made by nova
+# version: 1.0
+
+# developed/tested on skript version 2.14.1
+# addons: none
+
+options:
+	pageSize: 10
+	splitter: "&7&m                                                         "
+
+command /soundsearch <string>:
+	aliases: /searchsounds
+	usage: &a/soundsearch <query>
+	permission: soundsearch.uses
+	trigger:
+		set {-soundPage::%player's uuid%} to 1
+		sendSounds(player, arg-1)
+
+local function sendSounds(p: player, query: string):
+
+	set {_query::*} to {_query} split at " "
+
+	loop all sounds:
+		set {_sound} to "%loop-value%"
+
+		last 6 characters of {_sound} are "_sound":
+			replace "_sound" in {_sound} with ""
+
+		first 10 characters of {_sound} are "minecraft:":
+			replace "minecraft:" in {_sound} with ""
+
+		loop {_query::*}:
+			{_sound} contains loop-value-2
+			add {_sound} to {_sounds::*}
+			exit loop
+
+	delete {_sound}
+
+	set {-lastSoundQuery::%{_p}'s uuid%} to {_query}
+
+	set {_page} to {-soundPage::%{_p}'s uuid%}
+	set {_pitch} to {-soundPitch::%{_p}'s uuid%} ? 1
+	set {_seed} to {-soundSeed::%{_p}'s uuid%}
+	set {_index} to (({_page}-1)*{@pageSize})
+
+	loop 30 times:
+		send "" to {_p}
+
+	send "&b%size of {_sounds::*}% &7results for '&f%{_query}%&7' <ttp:&7Click to search><sgt:/searchsounds >&7[&f🔎&7]<reset>" to {_p}
+	send {@splitter} to {_p}
+
+	loop {_sounds::*}:
+
+		add 1 to {_index}
+
+		if {_sounds::%{_index}%} is set:
+			set {_sound} to "%{_sounds::%{_index}%}%"
+		else:
+			exit loop
+
+		{_index} is ({_page}*{@pageSize})+1:
+			exit loop
+
+		set {_syntax} to getSyntax({_sound}, {_seed}, {_pitch})
+
+		send formatted "<ttp:&fCopy &7%{_sound}%><sgt:%{_sound}%>&7[&f&l📋&7]<reset> <ttp:&fCopy &7%{_syntax}%><sgt:%{_syntax}%>&7[&8#&7]<reset> <ttp:&2Preview &a%{_sound}%><cmd:soundplay %{_sound}%>&a%{_sound}%<reset>" to {_p}
+
+	{_sound} is set:
+
+		send {@splitter} to {_p}
+
+		set {_maxPages} to ceil((size of {_sounds::*})/{@pageSize})
+
+		loop integers between 1 and {_maxPages}:
+			loop-integer is {_page}:
+				add "<ttp:&bYou are already on this page!>&7[&b&l%loop-integer%&7]<reset>" to {_pages::*}
+			else:
+				add "<ttp:&3Click to navigate to this page><cmd:soundpage %loop-integer% %{_query}%>&7[&3%loop-integer%&7]<reset>" to {_pages::*}
+
+		send formatted (join {_pages::*} with " ") to {_p}
+
+		add "<ttp:&7Click to stop all sounds><cmd:/stopsounds>&7[&cStop&7]" to {_options::*}
+		add "<ttp:&7Click to change the pitch><sgt:/soundpitch >&7[&aPitch: %{_pitch}%&7]" to {_options::*}
+		add "<ttp:&7Click to change the seed><sgt:/soundseed >&7[&2Seed: %{_seed} ? "🎲"%&7]" to {_options::*}
+
+		send formatted (join {_options::*} with " ") to {_p}
+
+	else:
+
+		send "&cNo sounds could be found." to {_p}
+
+		send {@splitter} to {_p}
+
+local function getSyntax(sound: string, seed: number, pitch: number) :: string:
+	set {_syntax} to "play sound ""%{_sound}%"""
+	{_seed} is set:
+		set {_syntax} to "%{_syntax}% with seed %{_seed}%"
+		{_pitch} is not 1
+		set {_syntax} to "%{_syntax}% and pitch %{_pitch}%"
+	else if {_pitch} is not 1:
+		set {_syntax} to "%{_syntax}% with pitch %{_pitch}%"
+
+	set {_syntax} to "%{_syntax}% to player"
+	return {_syntax}
+
+command /stopsounds:
+	permission: soundsearch.use
+	trigger:
+		stop all sounds for player
+
+command /soundpage <integer> [<string>]:
+	permission: soundsearch.use
+	trigger:
+		set {-soundPage::%player's uuid%} to arg-1
+		sendSounds(player, arg-2)
+
+command /soundplay <string>:
+	permission: soundsearch.use
+	trigger:
+		set {_pitch} to {-soundPitch::%player's uuid%} ? 1
+		set {_seed} to {-soundSeed::%player's uuid%}
+
+		{_seed} is set:
+			play sound arg-1 with seed {_seed} and pitch {_pitch} to player
+		else:
+			play sound arg-1 with pitch {_pitch} to player	
+
+command /soundpitch [<number>]:
+	permission: soundsearch.use
+	trigger:
+		arg-1 is set:
+			set {-soundPitch::%player's uuid%} to arg-1
+			send "&aUpdated: &7[&6Pitch: %arg-1%&7]"
+		else:
+			delete {-soundPitch::%player's uuid%}
+			send "&aUpdated: &7[&6Pitch: 1&7]"
+
+		set {_query} to {-lastSoundQuery::%player's uuid%}
+
+		{_query} is set:
+			sendSounds(player, {_query})
+
+command /soundseed [<number>]:
+	permission: soundsearch.use
+	trigger:
+		arg-1 is set:
+			set {-soundSeed::%player's uuid%} to arg-1
+			send "&aUpdated: &7[&cSeed: %arg-1%&7]"
+		else:
+			delete {-soundSeed::%player's uuid%}
+			send "&aUpdated: &7[&cSeed: 🎲&7]"
+
+		set {_query} to {-lastSoundQuery::%player's uuid%}
+
+		{_query} is set:
+			sendSounds(player, {_query})
