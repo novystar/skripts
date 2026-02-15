@@ -1,5 +1,5 @@
 # made by nova
-# version: 1.0
+# version: 1.1
 
 # developed/tested on skript version 2.14.1
 # addons: none
@@ -29,10 +29,8 @@ local function sendSounds(p: player, query: string):
 		first 10 characters of {_sound} are "minecraft:":
 			replace "minecraft:" in {_sound} with ""
 
-		loop {_query::*}:
-			{_sound} contains loop-value-2
-			add {_sound} to {_sounds::*}
-			exit loop
+		{_sound} contains {_query::*}
+		add {_sound} to {_sounds::*}
 
 	delete {_sound}
 
