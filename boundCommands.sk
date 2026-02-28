@@ -1,5 +1,5 @@
 # made by nova
-# version 1.0
+# version 1.1
 
 # developed and tested on skript version 2.14.1
 # requires: worldedit
@@ -36,7 +36,7 @@ local function checkConstraints(pos1: location, pos2: location) :: boolean:
 
 command /createbound <text>:
 	usage: &a/createbound <name>
-	permission: admin
+	permission: bounds.create
 	trigger:
 		set {_pos::*} to getSelection(player)
 		size of {_pos::*} is 2:
@@ -54,7 +54,7 @@ command /createbound <text>:
 
 command /deletebound <text>:
 	usage: &a/deletebound <name>
-	permission: admin
+	permission: bounds.delete
 	trigger:
 		bound with id arg-1 is set:
 			delete bound with id arg-1
@@ -64,7 +64,7 @@ command /deletebound <text>:
 
 command /boundvalue <text> <text> [<string>]:
 	usage: &a/boundvalue <bound> <key> [value]
-	permission: admin
+	permission: bounds.values
 	trigger:
 		bound with id arg-1 is set:
 			arg-3 is set:
@@ -79,7 +79,7 @@ command /boundvalue <text> <text> [<string>]:
 
 command /deleteboundvalue <text> <text>:
 	usage: &a/deleteboundvalue <bound> <key>
-	permission: admin
+	permission: bounds.values
 	trigger:
 		bound with id arg-1 is set:
 			bound value arg-2 of bound with id arg-1 is set:
@@ -93,7 +93,7 @@ command /deleteboundvalue <text> <text>:
 command /clearboundvalues <text>:
 	usage: &a/clearboundvalues <bound>
 	aliases: /deleteboundvalues
-	permission: admin
+	permission: bounds.values
 	trigger:
 		bound with id arg-1 is set:
 			delete all bound values of bound with id arg-1
@@ -104,7 +104,7 @@ command /clearboundvalues <text>:
 command /viewboundvalues <text>:
 	usage: &a/viewboundvalues <bound>
 	aliases: /boundvalues
-	permission: admin
+	permission: bounds.values
 	trigger:
 		bound with id arg-1 is set:
 			send "&3Values of bound with id &7%arg-1%&3:"
@@ -114,6 +114,38 @@ command /viewboundvalues <text>:
 				send "&2%loop-value%&7: &a%debug info of {_values::%loop-index%}%"
 		else:
 			send "&cBound with id &7%arg-1% &cdoes not exist"
+
+command /listbounds [<string>]:
+	permission: bounds.list
+	trigger:
+		arg-1 is set:
+			send "&3All bounds for &7'%arg-1%'&3:"
+			set {_bounds::*} to all nontemporary bound ids where [input contains arg-1]
+		else:
+			send "&3All bounds:"
+			set {_bounds::*} to all nontemporary bound ids
+
+		sort {_bounds::*}
+
+		loop {_bounds::*}:
+			set {_keys::*} to all bound keys of bound with id loop-value
+			set {_values::*} to all bound values of bound with id loop-value
+
+			{_keys::*} is set:
+				command sender is not console
+
+				add "&3Bound Values:" to {_hover::*}
+				loop {_keys::*}:
+					add " &2 %loop-value-2%&7: &a%debug info of {_values::%loop-index-2%}%" to {_hover::*}
+
+				set {_hover} to join {_hover::*} with nl
+
+				send formatted "&7- <ttp:%{_hover}%>&a%loop-value% &7(&e%size of {_keys::*}% &7Values)"
+
+				continue
+
+			send "&7- &a%loop-value% &7(&e%size of {_keys::*}% &7Values)"
+
 
 local function castValue(input: string) :: object:
 	{_input} is "true" or "false":
