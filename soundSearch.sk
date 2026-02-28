@@ -11,7 +11,7 @@ options:
 command /soundsearch <string>:
 	aliases: /searchsounds
 	usage: &a/soundsearch <query>
-	permission: soundsearch.uses
+	permission: soundsearch.use
 	trigger:
 		set {-soundPage::%player's uuid%} to 1
 		sendSounds(player, arg-1)
