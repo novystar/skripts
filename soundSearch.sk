@@ -1,16 +1,15 @@
 # made by nova
-# version: 1.1
+# version: 1.2
 
-# developed/tested on skript version 2.14.1
-# addons: none
+# tested on skript version 2.15.0
+# addons: lusk (for all sounds expression)
 
 options:
 	pageSize: 10
 	splitter: "&7&m                                                         "
 
 command /soundsearch <string>:
-	aliases: /searchsounds
-	usage: &a/soundsearch <query>
+	usage: /soundsearch <query>
 	permission: soundsearch.use
 	trigger:
 		set {-soundPage::%player's uuid%} to 1
@@ -44,7 +43,7 @@ local function sendSounds(p: player, query: string):
 	loop 30 times:
 		send "" to {_p}
 
-	send "&b%size of {_sounds::*}% &7results for '&f%{_query}%&7' <ttp:&7Click to search><sgt:/searchsounds >&7[&f🔎&7]<reset>" to {_p}
+	send formatted "&b%size of {_sounds::*}% &7results for '&f%{_query}%&7' <hover:show_text:'&7Click to search'><sgt:/searchsounds >&7[&f🔎&7]<reset>" to {_p}
 	send {@splitter} to {_p}
 
 	loop {_sounds::*}:
@@ -61,7 +60,7 @@ local function sendSounds(p: player, query: string):
 
 		set {_syntax} to getSyntax({_sound}, {_seed}, {_pitch})
 
-		send formatted "<ttp:&fCopy &7%{_sound}%><sgt:%{_sound}%>&7[&f&l📋&7]<reset> <ttp:&fCopy &7%{_syntax}%><sgt:%{_syntax}%>&7[&8#&7]<reset> <ttp:&2Preview &a%{_sound}%><cmd:soundplay %{_sound}%>&a%{_sound}%<reset>" to {_p}
+		send formatted "<hover:show_text:'&fCopy &7%{_sound}%'><sgt:%{_sound}%>&7[&f&l📋&7]<reset> <hover:show_text:'&fCopy &7%{_syntax}%'><sgt:%{_syntax}%>&7[&8#&7]<reset> <hover:show_text:'&2Preview &a%{_sound}%'><cmd:soundplay %{_sound}%>&a%{_sound}%<reset>" to {_p}
 
 	{_sound} is set:
 
@@ -71,15 +70,15 @@ local function sendSounds(p: player, query: string):
 
 		loop integers between 1 and {_maxPages}:
 			loop-integer is {_page}:
-				add "<ttp:&bYou are already on this page!>&7[&b&l%loop-integer%&7]<reset>" to {_pages::*}
+				add "<hover:show_text:'&bYou are already on this page!'>&7[&b&l%loop-integer%&7]<reset>" to {_pages::*}
 			else:
-				add "<ttp:&3Click to navigate to this page><cmd:soundpage %loop-integer% %{_query}%>&7[&3%loop-integer%&7]<reset>" to {_pages::*}
+				add "<hover:show_text:'&3Click to navigate to this page'><cmd:soundpage %loop-integer% %{_query}%>&7[&3%loop-integer%&7]<reset>" to {_pages::*}
 
 		send formatted (join {_pages::*} with " ") to {_p}
 
-		add "<ttp:&7Click to stop all sounds><cmd:/stopsounds>&7[&cStop&7]" to {_options::*}
-		add "<ttp:&7Click to change the pitch><sgt:/soundpitch >&7[&aPitch: %{_pitch}%&7]" to {_options::*}
-		add "<ttp:&7Click to change the seed><sgt:/soundseed >&7[&2Seed: %{_seed} ? "🎲"%&7]" to {_options::*}
+		add "<hover:show_text:'&7Click to stop all sounds'><cmd:/stopsounds>&7[&cStop&7]" to {_options::*}
+		add "<hover:show_text:'&7Click to change the pitch'><sgt:/soundpitch >&7[&aPitch: %{_pitch}%&7]" to {_options::*}
+		add "<hover:show_text:'&7Click to change the seed'><sgt:/soundseed >&7[&2Seed: %{_seed} ? "🎲"%&7]" to {_options::*}
 
 		send formatted (join {_options::*} with " ") to {_p}
 
